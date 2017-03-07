@@ -168,13 +168,33 @@ class DataPortal(object):
 
         self._first_trading_session = first_trading_day
 
-        _last_sessions = [r.last_available_dt
-                          for r in [equity_daily_reader, future_daily_reader]
-                          if r is not None]
-        if _last_sessions:
-            self._last_trading_session = min(_last_sessions)
+        if last_available_session:
+            self._last_trading_session = last_available_session
         else:
-            self._last_trading_session = None
+            # Infer the last session from the provided readers.
+            last_sessions = [
+                reader.last_available_dt
+                for reader in [equity_daily_reader, future_daily_reader]
+                if reader is not None
+            ]
+            if last_sessions:
+                self._last_trading_session = min(last_sessions)
+            else:
+                self._last_trading_session = None
+
+        if last_available_minute:
+            self._last_trading_minute = last_available_minute
+        else:
+            # Infer the last minute from the provided readers.
+            last_minutes = [
+                reader.last_available_dt
+                for reader in [equity_minute_reader, future_minute_reader]
+                if reader is not None
+            ]
+            if last_minutes:
+                self._last_trading_minute = min(last_minutes)
+            else:
+                self._last_trading_minute = None
 
         aligned_equity_minute_reader = self._ensure_reader_aligned(
             equity_minute_reader)
@@ -223,14 +243,14 @@ class DataPortal(object):
             self.trading_calendar,
             self.asset_finder,
             aligned_minute_readers,
-            last_available_minute,
+            self._last_trading_minute,
         )
 
         _dispatch_session_reader = AssetDispatchSessionBarReader(
             self.trading_calendar,
             self.asset_finder,
             aligned_session_readers,
-            last_available_session,
+            self._last_trading_session,
         )
 
         self._pricing_readers = {
