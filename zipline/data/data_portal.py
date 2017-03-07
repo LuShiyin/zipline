@@ -166,10 +166,10 @@ class DataPortal(object):
         self._augmented_sources_map = {}
         self._extra_source_df = None
 
-        self._first_trading_session = first_trading_day
+        self._first_available_session = first_trading_day
 
         if last_available_session:
-            self._last_trading_session = last_available_session
+            self._last_available_session = last_available_session
         else:
             # Infer the last session from the provided readers.
             last_sessions = [
@@ -178,12 +178,12 @@ class DataPortal(object):
                 if reader is not None
             ]
             if last_sessions:
-                self._last_trading_session = min(last_sessions)
+                self._last_available_session = min(last_sessions)
             else:
-                self._last_trading_session = None
+                self._last_available_session = None
 
         if last_available_minute:
-            self._last_trading_minute = last_available_minute
+            self._last_available_minute = last_available_minute
         else:
             # Infer the last minute from the provided readers.
             last_minutes = [
@@ -192,9 +192,9 @@ class DataPortal(object):
                 if reader is not None
             ]
             if last_minutes:
-                self._last_trading_minute = min(last_minutes)
+                self._last_available_minute = min(last_minutes)
             else:
-                self._last_trading_minute = None
+                self._last_available_minute = None
 
         aligned_equity_minute_reader = self._ensure_reader_aligned(
             equity_minute_reader)
@@ -243,14 +243,14 @@ class DataPortal(object):
             self.trading_calendar,
             self.asset_finder,
             aligned_minute_readers,
-            self._last_trading_minute,
+            self._last_available_minute,
         )
 
         _dispatch_session_reader = AssetDispatchSessionBarReader(
             self.trading_calendar,
             self.asset_finder,
             aligned_session_readers,
-            self._last_trading_session,
+            self._last_available_session,
         )
 
         self._pricing_readers = {
@@ -306,15 +306,15 @@ class DataPortal(object):
             return ReindexMinuteBarReader(
                 self.trading_calendar,
                 reader,
-                self._first_trading_session,
-                self._last_trading_session
+                self._first_available_session,
+                self._last_available_session
             )
         elif reader.data_frequency == 'session':
             return ReindexSessionBarReader(
                 self.trading_calendar,
                 reader,
-                self._first_trading_session,
-                self._last_trading_session
+                self._first_available_session,
+                self._last_available_session
             )
 
     def _reindex_extra_source(self, df, source_date_index):
